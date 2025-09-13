@@ -6,6 +6,7 @@ import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTB
 import type { Heartbeat, PushoverEndpoint } from '../graphql/schema';
 import type { ColumnsType } from 'antd/es/table';
 import { formatDuration } from '../utils/formatDuration';
+import { left, right } from '../constants/names';
 
 export const Heartbeats: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -213,7 +214,24 @@ export const Heartbeats: React.FC = () => {
             name="email_name"
             rules={[{ required: true, message: 'Please enter email name' }]}
           >
-            <Input disabled={!!editingHeartbeat} />
+            <Input
+              disabled={!!editingHeartbeat}
+              addonAfter={
+                <button
+                  type="button"
+                  onClick={() => {
+                    const leftName = left[Math.floor(Math.random() * left.length)];
+                    const rightName = right[Math.floor(Math.random() * right.length)];
+                    const randomNum = Math.floor(100 + Math.random() * 900); // 3 digit number
+                    const generatedName = `${leftName}_${rightName}${randomNum}`;
+                    form.setFieldsValue({ email_name: generatedName });
+                  }}
+                  style={{ padding: '0 6px', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                >
+                  Generate
+                </button>
+              }
+            />
           </Form.Item>
 
           <Form.Item
@@ -221,7 +239,36 @@ export const Heartbeats: React.FC = () => {
             name="max_heartbeat_interval_seconds"
             rules={[{ required: true, message: 'Please enter interval' }]}
           >
-            <InputNumber min={1} style={{ width: '100%' }} />
+            <Input
+              style={{ width: '100%' }}
+              addonAfter={
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = form.getFieldValue('max_heartbeat_interval_seconds');
+                    if (typeof val === 'string' && val.startsWith('=')) {
+                      try {
+                        const expr = val.substring(1).replace(/x/g, '*');
+                        // eslint-disable-next-line no-eval
+                        const result = eval(expr);
+                        if (!isNaN(result) && isFinite(result)) {
+                          form.setFieldsValue({ max_heartbeat_interval_seconds: result.toString() });
+                        } else {
+                          message.error('Invalid expression result');
+                        }
+                      } catch (e) {
+                        message.error('Error evaluating expression');
+                      }
+                    } else {
+                      message.info('Input must start with = to compute');
+                    }
+                  }}
+                  style={{ padding: '0 6px', cursor: 'pointer', border: 'none', background: 'transparent' }}
+                >
+                  Compute
+                </button>
+              }
+            />
           </Form.Item>
 
           <Form.Item
