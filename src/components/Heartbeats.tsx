@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, InputNumber, Select, Popconfirm, message, Tooltip } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Tooltip } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTBEAT, DELETE_HEARTBEAT, RECORD_HEARTBEAT } from '../graphql/queries';
