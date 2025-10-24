@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Tooltip } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Tooltip, DatePicker, Tag } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
+import dayjs from 'dayjs';
 import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTBEAT, DELETE_HEARTBEAT, RECORD_HEARTBEAT } from '../graphql/queries';
 import type { Heartbeat, PushoverEndpoint } from '../graphql/schema';
 import type { ColumnsType } from 'antd/es/table';
@@ -36,6 +37,7 @@ export const Heartbeats: React.FC = () => {
       endpoint_id: record.endpoint?.id,
       forwarding_token: record.forwarding_token,
       description: record.description,
+      disabled_until: record.disabled_until ? dayjs(record.disabled_until * 1000) : null,
     });
     setIsModalVisible(true);
   };
@@ -69,16 +71,26 @@ export const Heartbeats: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     try {
+      const { disabled_until: disabledUntilPicker, ...rest } = values || {};
+      const disabled_until =
+        disabledUntilPicker ? Math.floor(disabledUntilPicker.valueOf() / 1000) : null;
+
       if (editingHeartbeat) {
         await updateHeartbeat({
           variables: {
             email_name: editingHeartbeat.email_name,
-            ...values,
+            ...rest,
+            disabled_until,
           },
         });
         message.success('Heartbeat updated successfully');
       } else {
-        await createHeartbeat({ variables: values });
+        await createHeartbeat({
+          variables: {
+            ...rest,
+            disabled_until,
+          },
+        });
         message.success('Heartbeat created successfully');
       }
       setIsModalVisible(false);
@@ -94,6 +106,22 @@ export const Heartbeats: React.FC = () => {
       title: 'Email Name',
       dataIndex: 'email_name',
       key: 'email_name',
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => {
+        const now = Math.floor(Date.now() / 1000);
+        const isDisabled = !!record.disabled_until && record.disabled_until > now;
+        if (isDisabled) {
+          return (
+            <Tooltip title={`Disabled until ${new Date(record.disabled_until! * 1000).toLocaleString()}`}>
+              <Tag color="orange">Disabled</Tag>
+            </Tooltip>
+          );
+        }
+        return <Tag color="green">Active</Tag>;
+      },
     },
     {
       title: 'Last Heartbeat',
@@ -297,6 +325,17 @@ export const Heartbeats: React.FC = () => {
             name="forwarding_token"
           >
             <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="Disabled until"
+            name="disabled_until"
+          >
+            <DatePicker
+              showTime
+              allowClear
+              style={{ width: '100%' }}
+            />
           </Form.Item>
 
           <Form.Item

@@ -7,6 +7,7 @@ export const typeDefs = `#graphql
     type Heartbeat {
         email_name: String!
         last_heartbeat: Int
+        disabled_until: Int
         max_heartbeat_interval_seconds: Int!
         last_stale_notify: Int
         matching_criteria: String!
@@ -52,9 +53,9 @@ export const typeDefs = `#graphql
     }
     
     type Mutation {
-        createHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int!, matching_criteria: String!, endpoint_id: Int, forwarding_token: String, description: String): Heartbeat
+        createHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int!, matching_criteria: String!, endpoint_id: Int, forwarding_token: String, description: String, disabled_until: Int): Heartbeat
         recordHeartbeat(email_name: String!): ConciseHeartbeat
-        updateHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int, matching_criteria: String, endpoint_id: Int, forwarding_token: String, description: String): Heartbeat
+        updateHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int, matching_criteria: String, endpoint_id: Int, forwarding_token: String, description: String, disabled_until: Int): Heartbeat
         deleteHeartbeat(email_name: String!): Boolean
         createPushoverEndpoint(user_key: String!, timezone: String!, description: String): PushoverEndpoint
         updatePushoverEndpoint(id: Int!, user_key: String, timezone: String, description: String): PushoverEndpoint
@@ -81,6 +82,7 @@ export interface PushoverEndpoint {
 export interface Heartbeat {
   email_name: string;
   last_heartbeat?: number;
+  disabled_until?: number;
   max_heartbeat_interval_seconds: number;
   last_stale_notify?: number;
   matching_criteria: string;
