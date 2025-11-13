@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, InputNumber, DatePicker, Card, Modal, message, Typography, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Space, InputNumber, DatePicker, Card, Modal, message, Typography, Tag, Select } from 'antd';
 import { ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_EMAILS, DELETE_EMAILS_OLDER_THAN } from '../graphql/queries';
+import { GET_EMAILS, DELETE_EMAILS_OLDER_THAN, GET_HEARTBEATS } from '../graphql/queries';
 import type { Email } from '../graphql/schema';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -10,25 +10,39 @@ import { formatDuration } from '../utils/formatDuration';
 
 const { Text, Paragraph } = Typography;
 
-export const Emails: React.FC = () => {
+export const Emails: React.FC<{ preselectedEmailName?: string }> = ({ preselectedEmailName }) => {
   const [limit, setLimit] = useState(50);
   const [newerThan, setNewerThan] = useState<number | undefined>(undefined);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteBeforeDate, setDeleteBeforeDate] = useState<dayjs.Dayjs | null>(null);
+  const [selectedEmailName, setSelectedEmailName] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get('email_name') || undefined;
+    setSelectedEmailName(name || undefined);
+  }, []);
+  useEffect(() => {
+    if (preselectedEmailName !== undefined) {
+      setSelectedEmailName(preselectedEmailName || undefined);
+    }
+  }, [preselectedEmailName]);
 
   const { data, loading, refetch } = useQuery(GET_EMAILS, {
     variables: {
       limit,
-      newer_than: newerThan
+      newer_than: newerThan,
+      email_name: selectedEmailName
     }
   });
+  const { data: heartbeatsData } = useQuery(GET_HEARTBEATS);
 
   const [deleteEmailsOlderThan, { loading: deleteLoading }] = useMutation(DELETE_EMAILS_OLDER_THAN);
 
   const handleRefresh = () => {
     refetch({
       limit,
-      newer_than: newerThan
+      newer_than: newerThan,
+      email_name: selectedEmailName
     });
   };
 
@@ -159,6 +173,24 @@ export const Emails: React.FC = () => {
               placeholder="Select date"
               onChange={(date) => setNewerThan(date ? date.unix() : undefined)}
               style={{ marginLeft: 8 }}
+            />
+          </div>
+          <div>
+            <Text>Email:</Text>
+            <Select
+              allowClear
+              showSearch
+              placeholder="Filter by email"
+              value={selectedEmailName}
+              onChange={(value) => setSelectedEmailName(value || undefined)}
+              style={{ marginLeft: 8, width: 260 }}
+              options={(heartbeatsData?.heartbeats || []).map((hb: any) => ({
+                value: hb.email_name,
+                label: hb.email_name,
+              }))}
+              filterOption={(input, option) =>
+                (option?.label as string).toLowerCase().includes(input.toLowerCase())
+              }
             />
           </div>
           <Button

@@ -229,8 +229,8 @@ export const DELETE_API_TOKEN = gql`
 `;
 
 export const GET_EMAILS = gql`
-  query GetEmails($limit: Int!, $newer_than: Int) {
-    emails(limit: $limit, newer_than: $newer_than) {
+  query GetEmails($limit: Int!, $newer_than: Int, $email_name: String) {
+    emails(limit: $limit, newer_than: $newer_than, email_name: $email_name) {
       id
       received_time
       to

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout, Tabs, Button, Space, Typography } from 'antd';
 import { LogoutOutlined, HeartOutlined, BellOutlined, KeyOutlined, MailOutlined } from '@ant-design/icons';
 import { useConfig } from '../context/ConfigContext';
@@ -12,6 +12,12 @@ const { Title } = Typography;
 
 export const Dashboard: React.FC = () => {
   const { disconnect, endpoint } = useConfig();
+  const [activeTab, setActiveTab] = useState<string>('heartbeats');
+  const [emailFilter, setEmailFilter] = useState<string | undefined>(undefined);
+  const handleViewMessages = (emailName: string) => {
+    setEmailFilter(emailName);
+    setActiveTab('emails');
+  };
 
   const items = [
     {
@@ -21,7 +27,7 @@ export const Dashboard: React.FC = () => {
           <HeartOutlined /> Heartbeats
         </span>
       ),
-      children: <Heartbeats />,
+      children: <Heartbeats onViewMessages={handleViewMessages} />,
     },
     {
       key: 'endpoints',
@@ -48,7 +54,7 @@ export const Dashboard: React.FC = () => {
           <MailOutlined /> Emails
         </span>
       ),
-      children: <Emails />,
+      children: <Emails preselectedEmailName={emailFilter} />,
     },
   ];
 
@@ -86,7 +92,8 @@ export const Dashboard: React.FC = () => {
       </Header>
       <Content style={{ padding: '24px' }}>
         <Tabs 
-          defaultActiveKey="heartbeats" 
+          activeKey={activeTab} 
+          onChange={(key) => setActiveTab(key)}
           items={items}
           size="large"
           tabBarStyle={{ marginBottom: 16 }}

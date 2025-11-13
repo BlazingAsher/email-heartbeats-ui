@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Tooltip, DatePicker, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
 import dayjs from 'dayjs';
 import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTBEAT, DELETE_HEARTBEAT, RECORD_HEARTBEAT } from '../graphql/queries';
@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { formatDuration } from '../utils/formatDuration';
 import { left, right } from '../constants/names';
 
-export const Heartbeats: React.FC = () => {
+export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void }> = ({ onViewMessages }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingHeartbeat, setEditingHeartbeat] = useState<Heartbeat | null>(null);
   const [form] = Form.useForm();
@@ -160,9 +160,16 @@ export const Heartbeats: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      width: 280,
+      width: 360,
       render: (_, record) => (
         <Space size="small" wrap>
+          <Button
+            size="small"
+            icon={<MailOutlined />}
+            onClick={() => onViewMessages?.(record.email_name)}
+          >
+            Messages
+          </Button>
           <Popconfirm
             title="Are you sure you want to record a heartbeat?"
             description={`This will record a heartbeat for "${record.email_name}" at the current time.`}
