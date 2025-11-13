@@ -280,7 +280,7 @@ export const Heartbeats: React.FC = () => {
                         // eslint-disable-next-line no-eval
                         const result = eval(expr);
                         if (!isNaN(result) && isFinite(result)) {
-                          form.setFieldsValue({ max_heartbeat_interval_seconds: result.toString() });
+                          form.setFieldsValue({ max_heartbeat_interval_seconds: parseInt(result.toString()) });
                         } else {
                           message.error('Invalid expression result');
                         }
