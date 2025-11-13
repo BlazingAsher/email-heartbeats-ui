@@ -77,21 +77,38 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       const disabled_until =
         disabledUntilPicker ? Math.floor(disabledUntilPicker.valueOf() / 1000) : null;
 
+      // Ensure max_heartbeat_interval_seconds is always an integer
+      let maxSeconds = rest?.max_heartbeat_interval_seconds;
+      if (typeof maxSeconds === 'string') {
+        const trimmed = maxSeconds.trim();
+        if (trimmed.startsWith('=')) {
+          message.error('Use the Compute button or enter a numeric value for Max Heartbeat Interval');
+          return;
+        }
+        const parsed = parseInt(trimmed, 10);
+        if (Number.isNaN(parsed)) {
+          message.error('Max Heartbeat Interval must be an integer number of seconds');
+          return;
+        }
+        rest.max_heartbeat_interval_seconds = parsed;
+      }
+
+      const variablesBase = {
+        ...rest,
+        disabled_until,
+      };
+
       if (editingHeartbeat) {
         await updateHeartbeat({
           variables: {
             email_name: editingHeartbeat.email_name,
-            ...rest,
-            disabled_until,
+            ...variablesBase,
           },
         });
         message.success('Heartbeat updated successfully');
       } else {
         await createHeartbeat({
-          variables: {
-            ...rest,
-            disabled_until,
-          },
+          variables: variablesBase,
         });
         message.success('Heartbeat created successfully');
       }
@@ -312,6 +329,8 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           >
             <Input
               style={{ width: '100%' }}
+              inputMode="numeric"
+              pattern="[0-9]*"
               addonAfter={
                 <button
                   type="button"
