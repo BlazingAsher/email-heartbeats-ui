@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tooltip, DatePicker, Tag, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined, MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
 import dayjs from 'dayjs';
@@ -21,6 +22,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
   const [updateHeartbeat] = useMutation(UPDATE_HEARTBEAT);
   const [deleteHeartbeat] = useMutation(DELETE_HEARTBEAT);
   const [recordHeartbeat] = useMutation(RECORD_HEARTBEAT);
+  const [modal, contextHolder] = Modal.useModal();
 
   const handleCreate = () => {
     setEditingHeartbeat(null);
@@ -162,7 +164,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       key: 'actions',
       width: 100,
       render: (_, record) => {
-        const items = [
+        const items: MenuProps['items'] = [
           {
             key: 'messages',
             label: (
@@ -170,7 +172,6 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
                 <MailOutlined /> Messages
               </span>
             ),
-            onClick: () => onViewMessages?.(record.email_name),
           },
           {
             key: 'record',
@@ -179,16 +180,6 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
                 <HeartOutlined /> Record heartbeat
               </span>
             ),
-            onClick: () => {
-              Modal.confirm({
-                title: 'Record heartbeat?',
-                icon: <ExclamationCircleOutlined />,
-                content: `This will record a heartbeat for "${record.email_name}" at the current time.`,
-                okText: 'Yes',
-                cancelText: 'No',
-                onOk: () => handleRecordHeartbeat(record.email_name),
-              });
-            },
           },
           {
             type: 'divider',
@@ -200,30 +191,53 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
                 <EditOutlined /> Edit
               </span>
             ),
-            onClick: () => handleEdit(record),
           },
           {
             key: 'delete',
+            danger: true,
             label: (
-              <span style={{ color: '#ff4d4f' }}>
+              <span>
                 <DeleteOutlined /> Delete
               </span>
             ),
-            onClick: () => {
-              Modal.confirm({
-                title: 'Delete this heartbeat?',
-                icon: <ExclamationCircleOutlined />,
-                content: `Are you sure you want to delete "${record.email_name}"?`,
-                okText: 'Delete',
-                okButtonProps: { danger: true },
-                cancelText: 'Cancel',
-                onOk: () => handleDelete(record.email_name),
-              });
-            },
           },
         ];
         return (
-          <Dropdown menu={{ items }} trigger={['click']}>
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key, domEvent }) => {
+                domEvent.preventDefault();
+                domEvent.stopPropagation();
+
+                if (key === 'messages') {
+                  onViewMessages?.(record.email_name);
+                } else if (key === 'record') {
+                  modal.confirm({
+                    title: 'Record heartbeat?',
+                    icon: <ExclamationCircleOutlined />,
+                    content: `This will record a heartbeat for "${record.email_name}" at the current time.`,
+                    okText: 'Yes',
+                    cancelText: 'No',
+                    onOk: () => handleRecordHeartbeat(record.email_name),
+                  });
+                } else if (key === 'edit') {
+                  handleEdit(record);
+                } else if (key === 'delete') {
+                  modal.confirm({
+                    title: 'Delete this heartbeat?',
+                    icon: <ExclamationCircleOutlined />,
+                    content: `Are you sure you want to delete "${record.email_name}"?`,
+                    okText: 'Delete',
+                    okButtonProps: { danger: true },
+                    cancelText: 'Cancel',
+                    onOk: () => handleDelete(record.email_name),
+                  });
+                }
+              },
+            }}
+            trigger={['click']}
+          >
             <Button size="small" icon={<MoreOutlined />} />
           </Dropdown>
         );
@@ -242,6 +256,8 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           Create Heartbeat
         </Button>
       </div>
+
+      {contextHolder}
 
       <Table
         columns={columns}
