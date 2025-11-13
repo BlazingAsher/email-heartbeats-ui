@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, message, Tooltip, DatePicker, Tag } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Tooltip, DatePicker, Tag, Dropdown } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined, MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
 import dayjs from 'dayjs';
 import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTBEAT, DELETE_HEARTBEAT, RECORD_HEARTBEAT } from '../graphql/queries';
@@ -160,54 +160,74 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
     {
       title: 'Actions',
       key: 'actions',
-      width: 360,
-      render: (_, record) => (
-        <Space size="small" wrap>
-          <Button
-            size="small"
-            icon={<MailOutlined />}
-            onClick={() => onViewMessages?.(record.email_name)}
-          >
-            Messages
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to record a heartbeat?"
-            description={`This will record a heartbeat for "${record.email_name}" at the current time.`}
-            onConfirm={() => handleRecordHeartbeat(record.email_name)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              icon={<HeartOutlined />}
-              size="small"
-              type="primary"
-            >
-              Record
-            </Button>
-          </Popconfirm>
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            size="small"
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this heartbeat?"
-            onConfirm={() => handleDelete(record.email_name)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button
-              icon={<DeleteOutlined />}
-              danger
-              size="small"
-            >
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      width: 100,
+      render: (_, record) => {
+        const items = [
+          {
+            key: 'messages',
+            label: (
+              <span>
+                <MailOutlined /> Messages
+              </span>
+            ),
+            onClick: () => onViewMessages?.(record.email_name),
+          },
+          {
+            key: 'record',
+            label: (
+              <span>
+                <HeartOutlined /> Record heartbeat
+              </span>
+            ),
+            onClick: () => {
+              Modal.confirm({
+                title: 'Record heartbeat?',
+                icon: <ExclamationCircleOutlined />,
+                content: `This will record a heartbeat for "${record.email_name}" at the current time.`,
+                okText: 'Yes',
+                cancelText: 'No',
+                onOk: () => handleRecordHeartbeat(record.email_name),
+              });
+            },
+          },
+          {
+            type: 'divider',
+          },
+          {
+            key: 'edit',
+            label: (
+              <span>
+                <EditOutlined /> Edit
+              </span>
+            ),
+            onClick: () => handleEdit(record),
+          },
+          {
+            key: 'delete',
+            label: (
+              <span style={{ color: '#ff4d4f' }}>
+                <DeleteOutlined /> Delete
+              </span>
+            ),
+            onClick: () => {
+              Modal.confirm({
+                title: 'Delete this heartbeat?',
+                icon: <ExclamationCircleOutlined />,
+                content: `Are you sure you want to delete "${record.email_name}"?`,
+                okText: 'Delete',
+                okButtonProps: { danger: true },
+                cancelText: 'Cancel',
+                onOk: () => handleDelete(record.email_name),
+              });
+            },
+          },
+        ];
+        return (
+          <Dropdown menu={{ items }} trigger={['click']}>
+            <Button size="small" icon={<MoreOutlined />} />
+          </Dropdown>
+        );
+      },
     },
   ];
 
