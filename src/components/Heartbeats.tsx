@@ -127,6 +127,9 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       title: 'Email Name',
       dataIndex: 'email_name',
       key: 'email_name',
+      sorter: (a, b) => a.email_name.localeCompare(b.email_name),
+      defaultSortOrder: 'ascend',
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Status',
@@ -177,6 +180,8 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
+      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Actions',
