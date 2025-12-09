@@ -7,6 +7,7 @@ export const GET_HEARTBEATS = gql`
       email_name
       last_heartbeat
       disabled_until
+      always_forward
       max_heartbeat_interval_seconds
       matching_criteria
       last_stale_notify
@@ -28,6 +29,7 @@ export const GET_HEARTBEAT = gql`
       email_name
       last_heartbeat
       disabled_until
+      always_forward
       max_heartbeat_interval_seconds
       matching_criteria
       last_stale_notify
@@ -73,6 +75,7 @@ export const CREATE_HEARTBEAT = gql`
     $endpoint_id: Int
     $forwarding_token: String
     $description: String
+    $always_forward: Boolean
     $disabled_until: Int
   ) {
     createHeartbeat(
@@ -82,11 +85,13 @@ export const CREATE_HEARTBEAT = gql`
       endpoint_id: $endpoint_id
       forwarding_token: $forwarding_token
       description: $description
+      always_forward: $always_forward
       disabled_until: $disabled_until
     ) {
       email_name
       last_heartbeat
       disabled_until
+      always_forward
       max_heartbeat_interval_seconds
       last_stale_notify
       matching_criteria
@@ -110,6 +115,7 @@ export const UPDATE_HEARTBEAT = gql`
     $endpoint_id: Int
     $forwarding_token: String
     $description: String
+    $always_forward: Boolean
     $disabled_until: Int
   ) {
     updateHeartbeat(
@@ -119,11 +125,13 @@ export const UPDATE_HEARTBEAT = gql`
       endpoint_id: $endpoint_id
       forwarding_token: $forwarding_token
       description: $description
+      always_forward: $always_forward
       disabled_until: $disabled_until
     ) {
       email_name
       last_heartbeat
       disabled_until
+      always_forward
       max_heartbeat_interval_seconds
       last_stale_notify
       matching_criteria

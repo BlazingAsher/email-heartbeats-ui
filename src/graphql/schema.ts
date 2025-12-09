@@ -8,6 +8,7 @@ export const typeDefs = `#graphql
         email_name: String!
         last_heartbeat: Int
         disabled_until: Int
+        always_forward: Boolean!
         max_heartbeat_interval_seconds: Int!
         last_stale_notify: Int
         matching_criteria: String!
@@ -48,14 +49,14 @@ export const typeDefs = `#graphql
         pushoverEndpoint(id: Int!): PushoverEndpoint
         apiTokens: [ApiToken]
         apiToken(id: String!): ApiToken
-        emails(limit: Int!, newer_than: Int): [Email]
+        emails(limit: Int!, newer_than: Int, email_name: String): [Email]
         email(id: Int!): Email
     }
     
     type Mutation {
-        createHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int!, matching_criteria: String!, endpoint_id: Int, forwarding_token: String, description: String, disabled_until: Int): Heartbeat
+        createHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int!, matching_criteria: String!, endpoint_id: Int, forwarding_token: String, description: String, always_forward: Boolean, disabled_until: Int): Heartbeat
         recordHeartbeat(email_name: String!): ConciseHeartbeat
-        updateHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int, matching_criteria: String, endpoint_id: Int, forwarding_token: String, description: String, disabled_until: Int): Heartbeat
+        updateHeartbeat(email_name: String!, max_heartbeat_interval_seconds: Int, matching_criteria: String, endpoint_id: Int, forwarding_token: String, description: String, always_forward: Boolean, disabled_until: Int): Heartbeat
         deleteHeartbeat(email_name: String!): Boolean
         createPushoverEndpoint(user_key: String!, timezone: String!, description: String): PushoverEndpoint
         updatePushoverEndpoint(id: Int!, user_key: String, timezone: String, description: String): PushoverEndpoint
@@ -83,6 +84,7 @@ export interface Heartbeat {
   email_name: string;
   last_heartbeat?: number;
   disabled_until?: number;
+  always_forward: boolean;
   max_heartbeat_interval_seconds: number;
   last_stale_notify?: number;
   matching_criteria: string;

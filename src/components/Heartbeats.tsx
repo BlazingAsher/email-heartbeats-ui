@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Tooltip, DatePicker, Tag, Dropdown } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Tooltip, DatePicker, Tag, Dropdown, Switch } from 'antd';
 import type { MenuProps } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined, MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
@@ -27,6 +27,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
   const handleCreate = () => {
     setEditingHeartbeat(null);
     form.resetFields();
+    form.setFieldsValue({ always_forward: false });
     setIsModalVisible(true);
   };
 
@@ -39,6 +40,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       endpoint_id: record.endpoint?.id,
       forwarding_token: record.forwarding_token,
       description: record.description,
+      always_forward: record.always_forward,
       disabled_until: record.disabled_until ? dayjs(record.disabled_until * 1000) : null,
     });
     setIsModalVisible(true);
@@ -387,6 +389,14 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
             name="forwarding_token"
           >
             <Input />
+          </Form.Item>
+
+          <Form.Item
+            label="Always forward"
+            name="always_forward"
+            valuePropName="checked"
+          >
+            <Switch />
           </Form.Item>
 
           <Form.Item
