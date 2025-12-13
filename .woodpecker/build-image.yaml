@@ -17,12 +17,8 @@ steps:
         from_secret: GHCR_USERNAME
       password:
         from_secret: GHCR_TOKEN
-      build_args_from_env:
-        - VITE_GRAPHQL_ENDPOINT
-        - VITE_GOOGLE_CLIENT_ID
-    environment:
-      VITE_GRAPHQL_ENDPOINT:
-        from_secret: GRAPHQL_ENDPOINT
-      VITE_GOOGLE_CLIENT_ID:
-        from_secret: GOOGLE_CLIENT_ID
-
+      build_args:
+        VITE_GRAPHQL_ENDPOINT:
+          from_secret: GRAPHQL_ENDPOINT
+        VITE_GOOGLE_CLIENT_ID:
+          from_secret: GOOGLE_CLIENT_ID
