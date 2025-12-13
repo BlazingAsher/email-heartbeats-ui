@@ -14,6 +14,12 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set build-time env for Vite (passed via build args)
+ARG VITE_GRAPHQL_ENDPOINT
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GRAPHQL_ENDPOINT=${VITE_GRAPHQL_ENDPOINT}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+
 # Build the application
 RUN npm run build
 

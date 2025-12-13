@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ApolloClient, InMemoryCache, ApolloProvider as BaseApolloProvider, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { useConfig } from '../context/ConfigContext';
@@ -9,7 +9,18 @@ interface ApolloProviderProps {
 }
 
 export const ApolloProvider: React.FC<ApolloProviderProps> = ({ children }) => {
-  const { endpoint, apiToken } = useConfig();
+  const { endpoint, apiToken, tokenType, tokenExpiry, disconnectWithNotice } = useConfig();
+
+  // Proactively disconnect if a Google token is expired
+  useEffect(() => {
+    if (tokenType === 'google' && tokenExpiry) {
+      const nowMs = Date.now();
+      const expMs = tokenExpiry * 1000;
+      if (expMs <= nowMs) {
+        disconnectWithNotice('Your Google session expired. Please sign in again.');
+      }
+    }
+  }, [tokenType, tokenExpiry, disconnectWithNotice]);
 
   const client = useMemo(() => {
     const httpLink = createHttpLink({
@@ -17,10 +28,14 @@ export const ApolloProvider: React.FC<ApolloProviderProps> = ({ children }) => {
     });
 
     const authLink = setContext((_, { headers }) => {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const isExpired = tokenType === 'google' && tokenExpiry != null && tokenExpiry <= nowSec;
+      const authHeader = apiToken && !isExpired ? `Bearer ${apiToken}` : '';
+
       return {
         headers: {
           ...headers,
-          authorization: apiToken ? `Bearer ${apiToken}` : '',
+          authorization: authHeader,
         },
       };
     });
@@ -37,7 +52,7 @@ export const ApolloProvider: React.FC<ApolloProviderProps> = ({ children }) => {
         },
       },
     });
-  }, [endpoint, apiToken]);
+  }, [endpoint, apiToken, tokenType, tokenExpiry]);
 
   return <BaseApolloProvider client={client}>{children}</BaseApolloProvider>;
 }; 
