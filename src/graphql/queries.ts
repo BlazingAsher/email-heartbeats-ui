@@ -78,7 +78,7 @@ export const CREATE_HEARTBEAT = gql`
     $forwarding_token: String
     $description: String
     $always_forward: Boolean
-    $disabled_until: Int
+    $disabled_until: Float
   ) {
     createHeartbeat(
       email_name: $email_name
@@ -118,7 +118,7 @@ export const UPDATE_HEARTBEAT = gql`
     $forwarding_token: String
     $description: String
     $always_forward: Boolean
-    $disabled_until: Int
+    $disabled_until: Float
   ) {
     updateHeartbeat(
       email_name: $email_name
