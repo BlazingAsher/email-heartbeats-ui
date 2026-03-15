@@ -7,6 +7,7 @@ export const GET_HEARTBEATS = gql`
       email_name
       last_heartbeat
       disabled_until
+      is_disabled
       always_forward
       max_heartbeat_interval_seconds
       matching_criteria
@@ -29,6 +30,7 @@ export const GET_HEARTBEAT = gql`
       email_name
       last_heartbeat
       disabled_until
+      is_disabled
       always_forward
       max_heartbeat_interval_seconds
       matching_criteria

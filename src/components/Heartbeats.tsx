@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tooltip, DatePicker, Tag, Dropdown, Switch } from 'antd';
 import type { MenuProps } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined, MoreOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined, HeartOutlined, MailOutlined, MoreOutlined, ExclamationCircleOutlined, CheckCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { useQuery, useMutation } from '@apollo/client';
 import dayjs from 'dayjs';
 import { GET_HEARTBEATS, GET_PUSHOVER_ENDPOINTS, CREATE_HEARTBEAT, UPDATE_HEARTBEAT, DELETE_HEARTBEAT, RECORD_HEARTBEAT } from '../graphql/queries';
@@ -13,21 +13,27 @@ import { left, right } from '../constants/names';
 export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void }> = ({ onViewMessages }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingHeartbeat, setEditingHeartbeat] = useState<Heartbeat | null>(null);
+  const [showDisabled, setShowDisabled] = useState(false);
   const [form] = Form.useForm();
+  const indefinitelyDisabled = Form.useWatch('indefinitely_disabled', form);
 
   const { data, loading, refetch } = useQuery(GET_HEARTBEATS);
   const { data: endpointsData } = useQuery(GET_PUSHOVER_ENDPOINTS);
-  
+
   const [createHeartbeat] = useMutation(CREATE_HEARTBEAT);
   const [updateHeartbeat] = useMutation(UPDATE_HEARTBEAT);
   const [deleteHeartbeat] = useMutation(DELETE_HEARTBEAT);
   const [recordHeartbeat] = useMutation(RECORD_HEARTBEAT);
   const [modal, contextHolder] = Modal.useModal();
 
+  const displayedHeartbeats = (data?.heartbeats || []).filter(
+    (h: Heartbeat) => showDisabled || !h.is_disabled
+  );
+
   const handleCreate = () => {
     setEditingHeartbeat(null);
     form.resetFields();
-    form.setFieldsValue({ always_forward: false });
+    form.setFieldsValue({ always_forward: false, indefinitely_disabled: false });
     setIsModalVisible(true);
   };
 
@@ -41,7 +47,10 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       forwarding_token: record.forwarding_token,
       description: record.description,
       always_forward: record.always_forward,
-      disabled_until: record.disabled_until ? dayjs(record.disabled_until * 1000) : null,
+      disabled_until: (record.disabled_until && record.disabled_until !== 0)
+        ? dayjs(record.disabled_until * 1000)
+        : null,
+      indefinitely_disabled: record.disabled_until === 0,
     });
     setIsModalVisible(true);
   };
@@ -75,9 +84,12 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
 
   const handleSubmit = async (values: any) => {
     try {
-      const { disabled_until: disabledUntilPicker, ...rest } = values || {};
-      const disabled_until =
-        disabledUntilPicker ? Math.floor(disabledUntilPicker.valueOf() / 1000) : null;
+      const { disabled_until: disabledUntilPicker, indefinitely_disabled, ...rest } = values || {};
+      const disabled_until = indefinitely_disabled
+        ? 0
+        : disabledUntilPicker
+        ? Math.floor(disabledUntilPicker.valueOf() / 1000)
+        : null;
 
       // Ensure max_heartbeat_interval_seconds is always an integer
       let maxSeconds = rest?.max_heartbeat_interval_seconds;
@@ -135,12 +147,13 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       title: 'Status',
       key: 'status',
       render: (_, record) => {
-        const now = Math.floor(Date.now() / 1000);
-        const isDisabled = !!record.disabled_until && record.disabled_until > now;
-        if (isDisabled) {
+        if (record.is_disabled && record.disabled_until === 0) {
+          return <Tag color="red">Disabled</Tag>;
+        }
+        if (record.is_disabled) {
           return (
             <Tooltip title={`Disabled until ${new Date(record.disabled_until! * 1000).toLocaleString()}`}>
-              <Tag color="orange">Disabled</Tag>
+              <Tag color="orange">Disabled until</Tag>
             </Tooltip>
           );
         }
@@ -206,6 +219,14 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
             ),
           },
           {
+            key: 'toggle_disabled',
+            label: (
+              <span>
+                {record.is_disabled ? <><CheckCircleOutlined /> Enable</> : <><StopOutlined /> Disable</>}
+              </span>
+            ),
+          },
+          {
             type: 'divider',
           },
           {
@@ -230,7 +251,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           <Dropdown
             menu={{
               items,
-              onClick: ({ key, domEvent }) => {
+              onClick: async ({ key, domEvent }) => {
                 domEvent.preventDefault();
                 domEvent.stopPropagation();
 
@@ -245,6 +266,15 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
                     cancelText: 'No',
                     onOk: () => handleRecordHeartbeat(record.email_name),
                   });
+                } else if (key === 'toggle_disabled') {
+                  await updateHeartbeat({
+                    variables: {
+                      email_name: record.email_name,
+                      disabled_until: record.is_disabled ? null : 0,
+                    },
+                  });
+                  message.success(record.is_disabled ? 'Heartbeat enabled' : 'Heartbeat disabled');
+                  refetch();
                 } else if (key === 'edit') {
                   handleEdit(record);
                 } else if (key === 'delete') {
@@ -272,20 +302,29 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
   return (
     <>
       <div style={{ marginBottom: 16 }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-        >
-          Create Heartbeat
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+          >
+            Create Heartbeat
+          </Button>
+<Space>
+          <Switch
+            checked={showDisabled}
+            onChange={setShowDisabled}
+                      />
+<span>Show disabled</span>
+          </Space>
+        </Space>
       </div>
 
       {contextHolder}
 
       <Table
         columns={columns}
-        dataSource={data?.heartbeats || []}
+        dataSource={displayedHeartbeats}
         loading={loading}
         rowKey="email_name"
         pagination={{ pageSize: 10 }}
@@ -405,15 +444,25 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           </Form.Item>
 
           <Form.Item
-            label="Disabled until"
-            name="disabled_until"
+            label="Indefinitely disabled"
+            name="indefinitely_disabled"
+            valuePropName="checked"
           >
-            <DatePicker
-              showTime
-              allowClear
-              style={{ width: '100%' }}
-            />
+            <Switch />
           </Form.Item>
+
+          {!indefinitelyDisabled && (
+            <Form.Item
+              label="Disabled until"
+              name="disabled_until"
+            >
+              <DatePicker
+                showTime
+                allowClear
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item
             label="Description"
@@ -436,4 +485,4 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       </Modal>
     </>
   );
-}; 
+};

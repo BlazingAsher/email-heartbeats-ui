@@ -8,6 +8,7 @@ export const typeDefs = `#graphql
         email_name: String!
         last_heartbeat: Int
         disabled_until: Int
+        is_disabled: Boolean!
         always_forward: Boolean!
         max_heartbeat_interval_seconds: Int!
         last_stale_notify: Int
@@ -84,6 +85,7 @@ export interface Heartbeat {
   email_name: string;
   last_heartbeat?: number;
   disabled_until?: number;
+  is_disabled: boolean;
   always_forward: boolean;
   max_heartbeat_interval_seconds: number;
   last_stale_notify?: number;
