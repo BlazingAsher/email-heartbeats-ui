@@ -13,7 +13,7 @@ import { left, right } from '../constants/names';
 export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void }> = ({ onViewMessages }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingHeartbeat, setEditingHeartbeat] = useState<Heartbeat | null>(null);
-  const [showDisabled, setShowDisabled] = useState(false);
+  const [disabledFilter, setDisabledFilter] = useState<'enabled' | 'all' | 'disabled'>('enabled');
   const [form] = Form.useForm();
   const indefinitelyDisabled = Form.useWatch('indefinitely_disabled', form);
 
@@ -26,9 +26,11 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
   const [recordHeartbeat] = useMutation(RECORD_HEARTBEAT);
   const [modal, contextHolder] = Modal.useModal();
 
-  const displayedHeartbeats = (data?.heartbeats || []).filter(
-    (h: Heartbeat) => showDisabled || !h.is_disabled
-  );
+  const displayedHeartbeats = (data?.heartbeats || []).filter((h: Heartbeat) => {
+    if (disabledFilter === 'enabled') return !h.is_disabled;
+    if (disabledFilter === 'disabled') return h.is_disabled;
+    return true;
+  });
 
   const handleCreate = () => {
     setEditingHeartbeat(null);
@@ -154,7 +156,7 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
         if (record.is_disabled) {
           return (
             <Tooltip title={`Disabled until ${new Date(record.disabled_until! * 1000).toLocaleString()}`}>
-              <Tag color="orange">Disabled until</Tag>
+              <Tag color="orange">Temporarily disabled</Tag>
             </Tooltip>
           );
         }
@@ -311,13 +313,16 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           >
             Create Heartbeat
           </Button>
-          <Space>
-            <Switch
-              checked={showDisabled}
-              onChange={setShowDisabled}
-            />
-            <span>Show disabled</span>
-          </Space>
+          <Select
+            value={disabledFilter}
+            onChange={setDisabledFilter}
+            style={{ width: 160 }}
+            options={[
+              { value: 'enabled', label: 'Enabled only' },
+              { value: 'all', label: 'Enabled + disabled' },
+              { value: 'disabled', label: 'Disabled only' },
+            ]}
+          />
         </Space>
       </div>
 
