@@ -128,8 +128,9 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
       }
       setIsModalVisible(false);
       refetch();
-    } catch (error) {
-      message.error('Failed to save heartbeat');
+    } catch (error: any) {
+      const gqlMessage = error?.graphQLErrors?.[0]?.message;
+      alert(gqlMessage ? `Failed to save heartbeat: ${gqlMessage}` : 'Failed to save heartbeat');
       console.error(error);
     }
   };
@@ -310,12 +311,12 @@ export const Heartbeats: React.FC<{ onViewMessages?: (emailName: string) => void
           >
             Create Heartbeat
           </Button>
-<Space>
-          <Switch
-            checked={showDisabled}
-            onChange={setShowDisabled}
-                      />
-<span>Show disabled</span>
+          <Space>
+            <Switch
+              checked={showDisabled}
+              onChange={setShowDisabled}
+            />
+            <span>Show disabled</span>
           </Space>
         </Space>
       </div>
